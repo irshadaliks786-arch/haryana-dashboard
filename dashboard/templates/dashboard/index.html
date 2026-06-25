@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Haryana Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+        /* Navbar */
+        .navbar {
+            background: #1a1a2e;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        .navbar h1 { color: white; font-size: 18px; }
+        .navbar a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+        .navbar a:hover, .navbar a.active { background: #e94560; color: white; }
+
+        .container { padding: 25px 30px; }
+
+        /* Welcome Bar */
+        .welcome {
+            background: linear-gradient(135deg, #1a1a2e, #e94560);
+            color: white;
+            border-radius: 12px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .welcome h2 { font-size: 20px; margin-bottom: 5px; }
+        .welcome p { font-size: 13px; opacity: 0.8; }
+        .welcome .date { font-size: 13px; opacity: 0.7; }
+
+        /* Summary Cards */
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            margin-top: 25px;
+            letter-spacing: 1px;
+        }
+
+        .cards-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .card .icon { font-size: 24px; }
+        .card h3 { font-size: 11px; color: #999; text-transform: uppercase; }
+        .card .value { font-size: 28px; font-weight: bold; color: #1a1a2e; }
+        .card .sub { font-size: 12px; color: #777; }
+        .card.red { border-left: 4px solid #e94560; }
+        .card.orange { border-left: 4px solid #e67e22; }
+        .card.blue { border-left: 4px solid #3498db; }
+        .card.green { border-left: 4px solid #2ecc71; }
+        .card.purple { border-left: 4px solid #9b59b6; }
+        .card.yellow { border-left: 4px solid #f1c40f; }
+        .card.teal { border-left: 4px solid #1abc9c; }
+        .card.pink { border-left: 4px solid #e91e63; }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .chart-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .chart-box h2 { font-size: 14px; color: #1a1a2e; margin-bottom: 15px; }
+
+        /* Alerts Section */
+        .alerts-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            margin-bottom: 25px;
+        }
+        .alerts-box h2 {
+            font-size: 15px;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fff5f5;
+            border-left: 4px solid #e94560;
+        }
+        .alert-mag {
+            font-size: 22px;
+            font-weight: bold;
+            color: #e94560;
+            min-width: 60px;
+        }
+        .alert-info .place { font-size: 14px; font-weight: bold; color: #1a1a2e; }
+        .alert-info .time { font-size: 12px; color: #888; margin-top: 2px; }
+        .alert-badge {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .badge-danger { background: #e94560; color: white; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+
+        .no-alerts {
+            text-align: center;
+            padding: 30px;
+            color: #2ecc71;
+            font-size: 15px;
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .quick-link {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+        .quick-link:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .quick-link .ql-icon { font-size: 32px; }
+        .quick-link h3 { font-size: 14px; font-weight: bold; color: #1a1a2e; }
+        .quick-link p { font-size: 12px; color: #888; margin-top: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+    <h1>🌍 Haryana Dashboard</h1>
+    <a href="/" class="active">Dashboard</a>
+    <a href="/earthquakes/">Earthquakes</a>
+    <a href="/weather/">Weather + AQI</a>
+</div>
+
+<div class="container">
+
+    <!-- Welcome Bar -->
+    <div class="welcome">
+        <div>
+            <h2>🌍 Haryana Disaster & Environment Monitor</h2>
+            <p>Real-time earthquake, weather, and air quality monitoring for all Haryana districts</p>
+        </div>
+        <div class="date" id="currentDate"></div>
+    </div>
+
+    <!-- Earthquake Summary -->
+    <div class="section-title">🔴 Earthquake Summary</div>
+    <div class="cards-4">
+        <div class="card red">
+            <div class="icon">🔢</div>
+            <h3>Total Earthquakes</h3>
+            <div class="value">{{ total_earthquakes }}</div>
+            <div class="sub">Last 30 days</div>
+        </div>
+        <div class="card orange">
+            <div class="icon">💥</div>
+            <h3>Highest Magnitude</h3>
+            <div class="value">{{ highest_mag.magnitude|default:"N/A" }}</div>
+            <div class="sub">{{ highest_mag.place|truncatechars:30|default:"—" }}</div>
+        </div>
+        <div class="card purple">
+            <div class="icon">🕐</div>
+            <h3>Latest Earthquake</h3>
+            <div class="value">M {{ latest_eq.magnitude|default:"N/A" }}</div>
+            <div class="sub">{{ latest_eq.event_time|date:"d M Y"|default:"—" }}</div>
+        </div>
+        <div class="card yellow">
+            <div class="icon">⚠️</div>
+            <h3>Active Alerts</h3>
+            <div class="value">{{ alerts|length }}</div>
+            <div class="sub">Magnitude ≥ 4.0</div>
+        </div>
+    </div>
+
+    <!-- Weather Summary -->
+    <div class="section-title">🌤️ Weather Summary</div>
+    <div class="cards-4">
+        <div class="card red">
+            <div class="icon">🌡️</div>
+            <h3>Hottest District</h3>
+            <div class="value">{{ hottest.temperature|default:"N/A" }}°C</div>
+            <div class="sub">{{ hottest.district|default:"—" }}</div>
+        </div>
+        <div class="card blue">
+            <div class="icon">❄️</div>
+            <h3>Coldest District</h3>
+            <div class="value">{{ coldest.temperature|default:"N/A" }}°C</div>
+            <div class="sub">{{ coldest.district|default:"—" }}</div>
+        </div>
+        <div class="card orange">
+            <div class="icon">😷</div>
+            <h3>Most Polluted</h3>
+            <div class="value">AQI {{ most_polluted.aqi|default:"N/A" }}</div>
+            <div class="sub">{{ most_polluted.district|default:"—" }}</div>
+        </div>
+        <div class="card green">
+            <div class="icon">✅</div>
+            <h3>Cleanest Air</h3>
+            <div class="value">AQI {{ cleanest.aqi|default:"N/A" }}</div>
+            <div class="sub">{{ cleanest.district|default:"—" }}</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="section-title">📊 Charts</div>
+    <div class="charts-grid">
+        <div class="chart-box">
+            <h2>📈 Daily Earthquake Activity (Last 30 Days)</h2>
+            <canvas id="dailyChart" height="120"></canvas>
+        </div>
+        <div class="chart-box">
+            <h2>🍩 AQI Distribution</h2>
+            <canvas id="aqiDonut" height="120"></canvas>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="section-title">🚨 Active Earthquake Alerts (M ≥ 4.0)</div>
+    <div class="alerts-box">
+        <h2>⚠️ Recent High Magnitude Earthquakes</h2>
+        {% if alerts %}
+            {% for eq in alerts %}
+            <div class="alert-item">
+                <div class="alert-mag">M {{ eq.magnitude }}</div>
+                <div class="alert-info">
+                    <div class="place">{{ eq.place|default:"Unknown Location" }}</div>
+                    <div class="time">{{ eq.event_time|date:"d M Y, H:i UTC"|default:"—" }} | Depth: {{ eq.depth|default:"?" }} km</div>
+                </div>
+                {% if eq.magnitude >= 5.0 %}
+                    <span class="alert-badge badge-danger">🔴 Danger</span>
+                {% else %}
+                    <span class="alert-badge badge-warning">⚠️ Warning</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-alerts">
+                ✅ Koi active alert nahi hai — Sab safe hai!
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links -->
+    <div class="section-title">🔗 Quick Links</div>
+    <div class="quick-links">
+        <a href="/earthquakes/" class="quick-link">
+            <div class="ql-icon">🔴</div>
+            <div>
+                <h3>Earthquake Monitor</h3>
+                <p>Table, filters, map aur charts dekho</p>
+            </div>
+        </a>
+        <a href="/weather/" class="quick-link">
+            <div class="ql-icon">🌤️</div>
+            <div>
+                <h3>Weather + AQI</h3>
+                <p>Sabhi districts ka weather aur air quality</p>
+            </div>
+        </a>
+        <a href="/admin/" class="quick-link">
+            <div class="ql-icon">⚙️</div>
+            <div>
+                <h3>Admin Panel</h3>
+                <p>Database manage karo</p>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script>
+    // Current date
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // Daily Earthquake Chart
+    const labels = {{ chart_labels|safe }};
+    const values = {{ chart_values|safe }};
+
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Earthquakes',
+                data: values,
+                borderColor: '#e94560',
+                backgroundColor: 'rgba(233,69,96,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#e94560',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                x: { ticks: { font: { size: 10 }, maxRotation: 45 } }
+            }
+        }
+    });
+
+    // AQI Donut Chart
+    const aqiLabels = {{ aqi_labels|safe }};
+    const aqiCounts = {{ aqi_counts|safe }};
+
+    new Chart(document.getElementById('aqiDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: aqiLabels,
+            datasets: [{
+                data: aqiCounts,
+                backgroundColor: [
+                    '#2ecc71',
+                    '#3498db',
+                    '#f1c40f',
+                    '#e67e22',
+                    '#e94560'
+                ],
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 11 } }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
